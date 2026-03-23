@@ -16,7 +16,6 @@ options = optimoptions('fmincon', ...
     'MaxIterations',300, ...
     'MaxFunctionEvaluations',5000);
 % 假设你已经开启了并行池（如果没有，MATLAB 会在第一次运行 parfor 时自动开启）
-% gcp; % 手动开启命令
 
 % 为了在 parfor 内部比较，我们需要先准备好存储容器
 all_q_opt = cell(num_trials, 1);
@@ -24,12 +23,12 @@ all_fvals = Inf(num_trials, 1);
 
 parfor k = 1:num_trials
     % 这里的 q0 依然在每个迭代中独立生成
-    q_init = rand(LP.num_joint,1) * 2 * pi; 
+    q_init = rand(LP.num_joint,1) * 2 * pi;
 
     SV_init = Trans_aa_pos_init(LP, SV, q_init);
     w_init_struct = calc_Manipulability_0318(LP, SV_init);
-    w_ref = w_init_struct(2) + 1e-6; % 防止为0
-    
+    w_ref = w_init_struct(2) + 1e-9; 
+
     % 调用 fmincon
     [q_opt, fval] = fmincon(@(q) joint_IK_cost_0318(q, LP, SV, Goal, w_ref), ...
         q_init, [], [], [], [], ...

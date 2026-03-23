@@ -3,7 +3,7 @@
 % =========================================================================
 !git push origin --delete b3  
 % 删除远程仓库中的branch_2分支
-!git branch -d branch_2             
+!git branch -d branch_5             
 % 删除本地已合并的branch_2分支（若未合并会提示失败）
 !git branch -D b3             
 % 强制删除本地的branch_2分支（无论是否合并）
@@ -14,7 +14,7 @@
 % =========================================================================
 !git checkout -b branch_5           
 % 创建并切换到branch_2分支（等价于git branch + git checkout）
-!git switch master                  
+!git switch main                  
 % 切换到master主分支
 !git switch branch_2                
 % 切换到branch_2分支
@@ -33,7 +33,7 @@
 % 将当前分支的本地提交推送到远程对应分支（需已关联远程分支）
 !git push origin main          
 % 将本地branch_2分支推送到远程仓库（首次推送会创建远程分支）
-!git commit -a -m "3.23 整理"
+!git commit -a -m "3.23 ck"
 
 % =========================================================================
 % 日志查看相关命令

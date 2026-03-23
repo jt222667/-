@@ -1,3 +1,24 @@
+% function cost = joint_IK_cost_0318(q, LP, SV, Goal, w_ref)
+% 
+% SV_tmp = Trans_aa_pos_init(LP, SV, q);
+% 
+% % 1. 位置误差 (主任务)
+% pos_err = log((norm(Goal.POS{2} - SV_tmp.POS_e{2})));
+% 
+% % 2. 动态可操作度项 (次任务)
+% w_struct = calc_Manipulability_0318(LP, SV_tmp);
+% w_curr = w_struct(2);
+% 
+% % --- 核心：相对对数代价 ---
+% % 我们不关心 w 的绝对大小，只关心它相对于初始状态提升了多少
+% % 如果 w_curr > w_ref，则该项为负，奖励优化；反之惩罚。
+% % 对数处理确保了无论 w 是 10^5 还是 10^-5，其增量都在相似的量级
+% cost_w = -log((w_curr));
+% 
+% cost = pos_err + cost_w;
+% end
+
+
 function cost = joint_IK_cost_0318(q, LP, SV, Goal, w_ref)
 
 SV_tmp = Trans_aa_pos_init(LP, SV, q);
@@ -15,12 +36,11 @@ w_curr = w_struct(2);
 % 对数处理确保了无论 w 是 10^5 还是 10^-5，其增量都在相似的量级
 cost_w = -log((w_curr + 1e-9) / w_ref);
 
-% 3. 动态平衡权重
-% 这里的权重 1e4 确保了位置误差在 1mm 时产生的代价
-% 远大于可操作度带来的变化。
-% 你可以理解为：位置误差是"硬指标"，w 是"奖金"
 cost = pos_err + cost_w;
 end
+
+
+
 
 
 % function cost = joint_IK_cost_0318(q, LP, SV, Goal)
