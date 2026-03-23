@@ -30,7 +30,7 @@ align = [
 
 sequence = [ ...
     0  1  2, ...
-    0  4  5 6  7  8  9  , ...
+    0  4  5  6  7  8  9  , ...
     % 0  11 12 13 14 15 16, ...
     ];
 LP = LP_generate(module, install, align, sequence, RP_data);
@@ -43,7 +43,7 @@ SV = SV_generate(LP);
 %% 目标设置
 Goal = Goal_init(LP,SV);
 Goal.change = [0 1 0];
-Goal.POS{2}  = [0;0;7];
+Goal.POS{2}  = [0;0;5];
 
 %% 该构型最佳可操作度
 [LP, SV, ~] = check_kinematics_0323(LP, SV, Goal);
@@ -52,7 +52,7 @@ PlotSV(LP,SV);
 
 %% 逆运动学求解
 [LP, SV, flag] = check_kinematics_0318(LP, SV, Goal);
-w = calc_Manipulability_0318(LP, SV)
+w = calc_Manipulability_0318(LP, SV);
 PlotSV(LP,SV);
 
 %% 优化可操作度
