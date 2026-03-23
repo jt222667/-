@@ -1,0 +1,46 @@
+%% 构型寻优 
+clc;
+clear;
+
+%% 1. 构型库数据初始化
+RP_data = Module_Lib();
+
+%% 2. 【定义任务点】
+% 仅有任务点够吗？之后是否需要根据任务类型改变寻优策略
+goal = [0;0;7];
+
+%% 3. 【遗传算法参数设置】
+num_modules = calc_modules_upper_0318(goal,RP_data);   % 根据任务点限制模块上限
+IntCon = 1:num_modules*3;               % 声明这num_modules个变量全部是整数
+
+%% 生成该构型对应的mex文件，加快计算
+MEX_generate(num_modules,RP_data);
+
+%% 4. 【调用 GA 求解】
+% module 范围 [1,5], install 范围 [0,1], align 范围 [0,2]，但先假设全部正装，对齐角为0
+lb = [ones(1, num_modules)*1, ones(1, num_modules)*0,ones(1, num_modules)*0];
+ub = [ones(1, num_modules)*5, ones(1, num_modules)*1,ones(1, num_modules)*2];
+
+% 算法选项配置
+options = optimoptions('fmincon', ...
+    'Display','off', ...
+    'Algorithm','sqp', ...
+    'MaxIterations',300, ...
+    'MaxFunctionEvaluations',5000);
+
+% GA启动
+fprintf('开始构型寻优...\n');
+x0 = [randi([1,5], 1, num_modules), randi([0,1], 1, num_modules, randi([0,2], 1, num_modules))];   % 或者更合理初始化
+[best_x, best_cost] = fmincon(@(x) mex_ev(x, goal, RP_data), num_modules*3, [], [], [], [], lb, ub, [], IntCon, options);
+
+
+%% 5. 【结果解析】
+disp('寻优完成！最优构型参数：');
+best_module  = best_x(1:num_modules);
+best_install = best_x(num_modules+1 : 2*num_modules);
+best_align   = best_x(2*num_modules+1 : end);
+
+fprintf('Module:  [%s]\n', num2str(best_module));
+fprintf('Install: [%s]\n', num2str(best_install));
+fprintf('Align:   [%s]\n', num2str(best_align));
+

@@ -1,4 +1,4 @@
-function SV = Trans_aa_pos(LP, SV, q0)
+function SV = Trans_aa_pos_mex(LP, SV, q0)
 
 SV.R0 = [ 0 0 0 ]'; 
 SV.A0 = eye(3); 
@@ -23,7 +23,7 @@ for i = 1:SV.m
 end
 
 for i = 1:length(SV.Path{1})
-    SV.AA(3*SV.Path{1}(i)-2:3*SV.Path{1}(i)) = SV.AA(3*SV.Path{1}(i)-2:3*SV.Path{1}(i))*cx(pi) ;
+    SV.AA(:,3*SV.Path{1}(i)-2:3*SV.Path{1}(i)) = SV.AA(:,3*SV.Path{1}(i)-2:3*SV.Path{1}(i))*cx(pi) ;
 end
 
 end

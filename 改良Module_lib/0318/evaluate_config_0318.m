@@ -21,7 +21,7 @@ function cost = evaluate_config_0318(x, goal, RP_data)
     
     % 4. 评价指标计算
     if flag
-        cost = 1e9; % 惩罚项：如果工作点不可达，赋予极大的惩罚值，直接淘汰
+        cost = inf; % 惩罚项：如果工作点不可达，赋予极大的惩罚值，直接淘汰
         return;
     else
         % 如果可达，计算可操作度 (Manipulability)和精度(Accuracy)
