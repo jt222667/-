@@ -22,8 +22,9 @@ for i = 1:SV.m
     [ SV.POS_e{i} , SV.ORI_e{i} ] = f_kin_end(LP, SV, SV.Path{i});
 end
 
+
 for i = 1:length(SV.Path{1})
-    SV.AA(3*SV.Path{1}(i)-2:3*SV.Path{1}(i)) = SV.AA(3*SV.Path{1}(i)-2:3*SV.Path{1}(i))*cx(pi) ;
+    SV.AA(:,3*SV.Path{1}(i)-2:3*SV.Path{1}(i)) = SV.AA(:,3*SV.Path{1}(i)-2:3*SV.Path{1}(i))*cx(pi) ;
 end
 
 end

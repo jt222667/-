@@ -1,8 +1,9 @@
 %% 3.17 12:28 修正f_kin_end
-function [LP, SV, flag] = check_kinematics_0318(LP, SV, Goal)
+%% 3.23 求最大可操作度
+function [LP, SV, flag] = check_kinematics_0323(LP, SV, Goal)
 %% 初始化
 % 目标点容差设置
-norm_limit = 5e-1;
+norm_limit = 1e-2;
 % 目标点可达flag = 0，不可达flag = 1
 flag = 0;
 
@@ -11,7 +12,7 @@ flag = 0;
 num_trials = 5;  % 一次运行中尝试5个随机初始点
 % 优化器设置
 options = optimoptions('fmincon', ...
-    'Display','iter', ...
+    'Display','off', ...
     'Algorithm','sqp', ...
     'MaxIterations',300, ...
     'MaxFunctionEvaluations',5000);
@@ -24,9 +25,10 @@ all_fvals = Inf(num_trials, 1);
 
 parfor k = 1:num_trials
     % 这里的 q0 依然在每个迭代中独立生成
-    q_init = rand(LP.num_joint,1) * 2*pi; 
+    q_init = rand(LP.num_joint,1) * 2 * pi; 
+
     % 调用 fmincon
-    [q_opt, fval] = fmincon(@(q) joint_IK_cost_0318(q, LP, SV, Goal), ...
+    [q_opt, fval] = fmincon(@(q) joint_IK_cost_0323(q, LP, SV), ...
         q_init, [], [], [], [], ...
         zeros(LP.num_joint,1), 2*pi*ones(LP.num_joint,1), [], options);
     % 将结果存入临时数组（parfor 内部不能直接更新外部的全局 best_cost）
@@ -36,7 +38,7 @@ end
 % 循环结束后，在主线程找出最优解
 [~, best_idx] = min(all_fvals);
 q_sol = all_q_opt{best_idx};
-SV = Trans_aa_pos(LP, SV, q_sol);
+SV = Trans_aa_pos_init(LP, SV, q_sol);
 
 %% 验证逆解结果
 % 结果对比可视化

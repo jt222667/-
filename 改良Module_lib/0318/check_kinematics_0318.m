@@ -2,7 +2,7 @@
 function [LP, SV, flag] = check_kinematics_0318(LP, SV, Goal)
 %% 初始化
 % 目标点容差设置
-norm_limit = 5e-1;
+norm_limit = 1e-2;
 % 目标点可达flag = 0，不可达flag = 1
 flag = 0;
 
@@ -11,7 +11,7 @@ flag = 0;
 num_trials = 5;  % 一次运行中尝试5个随机初始点
 % 优化器设置
 options = optimoptions('fmincon', ...
-    'Display','iter', ...
+    'Display','off', ...
     'Algorithm','sqp', ...
     'MaxIterations',300, ...
     'MaxFunctionEvaluations',5000);
@@ -24,32 +24,26 @@ all_fvals = Inf(num_trials, 1);
 
 parfor k = 1:num_trials
     % 这里的 q0 依然在每个迭代中独立生成
-    q_init = rand(LP.num_joint,1) * 2*pi; 
+    q_init = rand(LP.num_joint,1) * 2 * pi; 
+
+    SV_init = Trans_aa_pos_init(LP, SV, q_init);
+    w_init_struct = calc_Manipulability_0318(LP, SV_init);
+    w_ref = w_init_struct(2) + 1e-6; % 防止为0
+    
     % 调用 fmincon
-    [q_opt, fval] = fmincon(@(q) joint_IK_cost_0318(q, LP, SV, Goal), ...
+    [q_opt, fval] = fmincon(@(q) joint_IK_cost_0318(q, LP, SV, Goal, w_ref), ...
         q_init, [], [], [], [], ...
         zeros(LP.num_joint,1), 2*pi*ones(LP.num_joint,1), [], options);
     % 将结果存入临时数组（parfor 内部不能直接更新外部的全局 best_cost）
     all_q_opt{k} = q_opt;
     all_fvals(k) = fval;
 end
-
 % 循环结束后，在主线程找出最优解
-[best_cost, best_idx] = min(all_fvals);
+[~, best_idx] = min(all_fvals);
 q_sol = all_q_opt{best_idx};
-% for k = 1:num_trials
-%     q0 = rand(LP.num_joint,1) * 2*pi;
-%     % 调用 fmincon 优化关节角
-%     [q_opt, fval] = fmincon(@(q) joint_IK_cost_0318(q, LP, SV, Goal), ...
-%         q0, [], [], [], [], ...
-%         zeros(LP.num_joint,1), 2*pi*ones(LP.num_joint,1), [], options);
-%     if fval < best_cost
-%         best_cost = fval;
-%         q_sol = q_opt;
-%     end
-% end
-SV = Trans_aa_pos(LP, SV, q_sol);
-%% 用正运动学验证逆解结果
+SV = Trans_aa_pos_init(LP, SV, q_sol);
+
+%% 验证逆解结果
 % 结果对比可视化
 for i = 1:SV.m
     fprintf('   Goal.POS{%d}: SV.POS_e{%d}:\n', i, i);
