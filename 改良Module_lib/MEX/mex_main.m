@@ -22,7 +22,7 @@ lb = [ones(1, num_modules)*1, ones(1, num_modules)*0,ones(1, num_modules)*0];
 ub = [ones(1, num_modules)*5, ones(1, num_modules)*1,ones(1, num_modules)*2];
 
 % 算法选项配置
-options = optimoptions('fmincon', ...
+options = optimoptions('ga', ...
     'Display', 'iter', ...          
     ... % --- 种群与迭代 ---
     'PopulationSize', 200, ...       % 【调大】变量变多后，50的种群多样性不够，容易早熟陷入局部最优。建议设为 100~200。
@@ -33,12 +33,21 @@ options = optimoptions('fmincon', ...
     ... % --- 加速计算 ---
     'UseParallel', true, ...         % 【极力推荐】如果你的 evaluate_config_0318 计算很慢，务必开启并行池（前提是评价函数内部没有全局变量冲突）
     ... % --- 可视化 ---
-    'PlotFcn', @gaplotbestf, ...
-    'OutputFcn', @ga_outfun);
+    'PlotFcn', @gaplotbestf);
 
 % GA启动
 fprintf('开始构型寻优...\n');
+options = optimoptions('ga', options, 'OutputFcn', @(options, state, flag) ga_outfun(options, state, flag, goal, RP_data));
 [best_x, best_cost] = ga(@(x) mex_ev(x, goal, RP_data), num_modules*3, [], [], [], [], lb, ub, [], IntCon, options);
+
+% 使用 OutputFcn 中逐代复核得到的全局最优（含 w / q_opt）
+if evalin('base', "exist('ga_tracked_best','var')")
+    tracked_best = evalin('base', 'ga_tracked_best');
+    if tracked_best.cost < best_cost
+        best_x = tracked_best.x;
+        best_cost = tracked_best.cost;
+    end
+end
 
 
 %% 5. 【结果解析】
@@ -50,4 +59,9 @@ best_align   = best_x(2*num_modules+1 : end);
 fprintf('Module:  [%s]\n', num2str(best_module));
 fprintf('Install: [%s]\n', num2str(best_install));
 fprintf('Align:   [%s]\n', num2str(best_align));
+fprintf('Cost:    %.6f\n', best_cost);
 
+if exist('tracked_best', 'var')
+    fprintf('w_opt:   %.6f\n', tracked_best.w);
+    fprintf('q_opt:   [%s]\n', num2str(tracked_best.q_opt(:).'));
+end

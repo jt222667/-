@@ -1,5 +1,6 @@
-function cost = mex_ev(x, goal, RP_data)
+function [cost, detail] = mex_ev(x, goal, RP_data)
     cost = 0;
+    detail = struct('x', x, 'flag', 1, 'w', NaN, 'q_opt', [], 'sig', NaN);
     % 1. 解码染色体 x 还原为构型参数
     num_modules = length(x) / 3;
     module  = [1 2 1 x(1 : num_modules)];
@@ -17,11 +18,12 @@ function cost = mex_ev(x, goal, RP_data)
     Goal = Goal_init(LP,SV);
     Goal.POS{2} = goal;
     Goal.change = [0;1;0];
-    [LP, SV, flag] = mex_ck(LP, SV, Goal); 
+    [LP, SV, flag, q_opt, w_sol] = mex_ck(LP, SV, Goal); 
     
     % 4. 评价指标计算
     if flag
         cost = inf; % 惩罚项：如果工作点不可达，赋予极大的惩罚值，直接淘汰
+        detail.flag = 1;
         return;
     else
         % 如果可达，计算可操作度 (Manipulability)和精度(Accuracy)
@@ -30,5 +32,10 @@ function cost = mex_ev(x, goal, RP_data)
         sig = calc_Accuracy_0318(LP, SV); 
         % 综合代价函数
         cost = cost + wei_Manipulability(w) + wei_Accuracy(sig); 
+
+        detail.flag = 0;
+        detail.w = w_sol;
+        detail.q_opt = q_opt;
+        detail.sig = sig;
     end
 end
