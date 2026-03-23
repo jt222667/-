@@ -1,10 +1,13 @@
 %% 3.17 12:28 修正f_kin_end
-function [LP, SV, flag] = mex_ck(LP, SV, Goal)
+function [LP, SV, flag, q_sol, w_sol, f_best] = mex_ck(LP, SV, Goal)
 %% 初始化
 % 目标点容差设置
 norm_limit = 1e-2;
 % 目标点可达flag = 0，不可达flag = 1
 flag = 0;
+q_sol = [];
+w_sol = NaN;
+f_best = Inf;
 
 %% 优化关节角求逆解
 % 随机初始关节角
@@ -22,8 +25,9 @@ all_q_opt = cell(num_trials, 1);
 all_fvals = Inf(num_trials, 1);
 
 parfor k = 1:num_trials
-    % 这里的 q0 依然在每个迭代中独立生成
-    q_init = rand(LP.num_joint,1) * 2 * pi;
+    % 使用确定性的初值，避免随机初值导致同一构型重复评估结果不一致
+    base = (1:LP.num_joint)' / (LP.num_joint + 1);
+    q_init = mod(2*pi*(base + (k-1)/num_trials), 2*pi);
 
     SV_init = Trans_aa_pos_mex(LP, SV, q_init);
     w_init_struct = calc_Manipulability_0318(LP, SV_init);
@@ -38,9 +42,11 @@ parfor k = 1:num_trials
     all_fvals(k) = fval;
 end
 % 循环结束后，在主线程找出最优解
-[~, best_idx] = min(all_fvals);
+[f_best, best_idx] = min(all_fvals);
 q_sol = all_q_opt{best_idx};
 SV = Trans_aa_pos_mex(LP, SV, q_sol);
+w_struct = calc_Manipulability_0318(LP, SV);
+w_sol = w_struct(2);
 
 %% 验证逆解结果
 % 结果对比可视化
@@ -62,7 +68,6 @@ fprintf(' ERROR = %d\n',ERROR);
 fprintf(' flag  = %d\n',flag);
 
 end
-
 
 
 
